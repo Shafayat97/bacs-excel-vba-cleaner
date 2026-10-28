@@ -1,8 +1,7 @@
 # BACS Excel VBA Cleaner
-Excel VBA macro for UK BACS payments: pads sort codes (6 digits) and account numbers (8 digits), strips special characters, limits names and references to 18 characters, and exports to CSV.
 Stop fixing BACS payment files by hand. Type or paste your payment data into Excel, and this VBA tool automatically formats every cell, then exports a clean CSV ready to upload to your banking or payroll software.
 
-Before and after
+Demo
 
 The problem
 
@@ -34,7 +33,7 @@ Example
 Before	20-00-00	Mr. John O'Brien-Smith (Ltd)	1234567	£1,250.50	INV-2026/001
 After	200000	Mr John OBrienSmit	01234567	1250.50	INV2026001
 How to use
-Download VBA_BACS.xlsm and open it in Excel.
+Download BACS_Cleaner.xlsm and open it in Excel.
 Click Enable Content when Excel asks about macros.
 Type or paste your payment data into the sheet, starting at cell A1 (no header row).
 Run one of the export macros (Alt + F8):
@@ -42,20 +41,24 @@ SaveAsCSV creates output.csv
 SaveAsNotepad creates output.txt from the CSV
 ExportAll creates both
 The files are saved in the same folder as the workbook.
+Try it with sample data
 
-Already have messy data in the sheet? Import FixMessyData.bas (Alt + F11 → File → Import File) and run the FixMessyData macro to clean everything in one go.
-
-Try it with test data
-
-BACS_messy_test_data.xlsx contains 12 rows of deliberately messy, completely fake data. Copy it into the sheet and watch it get cleaned.
+sample-data/raw_data.xlsx contains 12 rows of deliberately messy, completely fake payment data. Copy it into the workbook and watch it get cleaned. sanitized_data.csv and sanitized_data.txt show the exported result.
 
 Files
-File	Description
-VBA_BACS.xlsm	The workbook with the macros built in
-src/Sheet1.cls	Code that cleans cells as you type (goes in the sheet module)
-src/Module1.bas	Export macros: SaveAsCSV, SaveAsNotepad, ExportAll
-FixMessyData.bas	Optional macro to clean data already in the sheet
-BACS_messy_test_data.xlsx	Fake messy data for testing
+bacs-excel-vba-cleaner/
+├── BACS_Cleaner.xlsm            the workbook with the macros built in
+├── src/
+│   ├── Sheet1_AutoClean.vb      cleans cells as you type (sheet module)
+│   └── Export_Macros.bas        SaveAsCSV, SaveAsNotepad, ExportAll
+├── sample-data/
+│   ├── raw_data.xlsx            messy fake data (before)
+│   ├── sanitized_data.csv       exported CSV (after)
+│   └── sanitized_data.txt       exported TXT (after)
+└── screenshots/
+    ├── before.png
+    ├── after.png
+    └── demo.gif
 
 The VBA code is also provided as plain text files, so you can read it before opening a macro-enabled workbook.
 
