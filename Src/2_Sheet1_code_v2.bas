@@ -1,14 +1,13 @@
 Option Explicit
 
 ' ============================================================
-'  Sheet1 code
+'  Sheet1 code (v2 - with exception checking)
 '  Paste this into the SHEET module (Sheet1), not a normal module.
-'  Auto-cleans columns A-E when data is typed or pasted,
-'  using the same rules as FixMessyData (CleanCell).
 ' ============================================================
 
 Private Sub Worksheet_Change(ByVal Target As Range)
-    Dim rng As Range, cell As Range
+    Dim rng As Range, cell As Range, area As Range
+    Dim r As Long
 
     Set rng = Intersect(Target, Me.Range("A:E"), Me.UsedRange)
     If rng Is Nothing Then Exit Sub
@@ -17,8 +16,17 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     Application.EnableEvents = False
 
     For Each cell In rng.Cells
-        CleanCell cell
+        CleanCell cell, True
     Next cell
+
+    For Each area In rng.Areas
+        For r = area.Row To area.Row + area.Rows.Count - 1
+            Me.Cells(r, 8).ClearContents   ' data changed: approval needed again
+            RefreshRow Me, r
+        Next r
+    Next area
+
+    SetupColumns Me
 
 ExitSub:
     Application.EnableEvents = True
@@ -33,9 +41,10 @@ Sub SaveAsCSV()
     Dim r As Long, c As Long
     Dim cellVal As String, lineStr As String
 
-    csvPath = ThisWorkbook.Path & "\" & "output.csv"
     Set oWS = ThisWorkbook.ActiveSheet
+    If Not ReadyToExport(oWS) Then Exit Sub
 
+    csvPath = ThisWorkbook.Path & "\" & "output.csv"
     fileNum = FreeFile
     Open csvPath For Output As #fileNum
 
@@ -43,7 +52,6 @@ Sub SaveAsCSV()
         lineStr = ""
         For c = 1 To 5
             cellVal = Trim(CStr(oWS.Cells(r, c).Value))
-            ' Amount always exported with 2 decimals (1250.5 -> 1250.50)
             If c = 4 And cellVal <> "" And IsNumeric(cellVal) Then
                 cellVal = Format(CDbl(cellVal), "0.00")
             End If
@@ -54,7 +62,6 @@ Sub SaveAsCSV()
             End If
         Next c
 
-        ' Skip completely empty rows
         If Trim(Replace(lineStr, ",", "")) <> "" Then
             Print #fileNum, lineStr
         End If
@@ -81,22 +88,15 @@ Sub SaveAsNotepad()
 
     Do While Not EOF(fileIn)
         Line Input #fileIn, lineStr
-
-        ' Remove trailing commas
         Do While Right(Trim(lineStr), 1) = ","
             lineStr = Left(Trim(lineStr), Len(Trim(lineStr)) - 1)
         Loop
-
-        ' Remove leading commas
         Do While Left(Trim(lineStr), 1) = ","
             lineStr = Mid(Trim(lineStr), 2)
         Loop
-
-        ' Remove double commas
         Do While InStr(lineStr, ",,") > 0
             lineStr = Join(Split(lineStr, ",,"), ",")
         Loop
-
         Print #fileOut, lineStr
     Loop
 
@@ -108,6 +108,7 @@ End Sub
 ' ============================================================
 
 Sub ExportAll()
+    If Not ReadyToExport(ThisWorkbook.ActiveSheet) Then Exit Sub
     Call SaveAsCSV
     Call SaveAsNotepad
     MsgBox "Done! Both CSV and TXT files have been saved."
